@@ -180,7 +180,7 @@ def registry():
         if cfg.get("status") != "scraped":
             continue
         try:
-            got = (tribe if cfg["type"] == "tribe" else ldjson_venue)(cfg)
+            got = {"tribe": tribe, "ldjson": ldjson_venue, "wp_posts": wp_posts}[cfg["type"]](cfg)
         except Exception as ex:
             print(f"  {cfg['name']} FAILED: {ex}")
             continue
@@ -212,6 +212,29 @@ def tribe(cfg):
         url = j.get("next_rest_url")
         if not url:
             break
+    return out
+
+
+def wp_posts(cfg):
+    """WordPress sites that publish one post per show titled 'Act  ∙  Month D, YYYY' (e.g. Crafthouse)."""
+    out = []
+    r = get(cfg["url"].rstrip("/") + "/wp-json/wp/v2/posts?per_page=100&_fields=title,link,content")
+    if not r:
+        return out
+    for p in r.json():
+        title = clean(p["title"]["rendered"])
+        m = re.match(r"(.*?)\s*[∙·•]\s*([A-Za-z]+ \d{1,2}, \d{4})$", title)
+        if not m:
+            continue
+        try:
+            d = dt.datetime.strptime(m.group(2), "%B %d, %Y").date().isoformat()
+        except ValueError:
+            continue
+        img = re.search(r'<img[^>]+src="([^"]+)"', p.get("content", {}).get("rendered", ""))
+        out.append(dict(source="registry", title=m.group(1), artists=[headliner(m.group(1))], date=d, time=None,
+                        venue=cfg["name"], city=cfg.get("city", ""), address=cfg.get("address", ""),
+                        lat=cfg.get("lat"), lon=cfg.get("lon"), image=img.group(1) if img else None,
+                        url=p["link"], desc=""))
     return out
 
 
@@ -352,7 +375,7 @@ def main():
         if e.get("lat") is not None and miles(float(e["lat"]), float(e["lon"]))[2] > MAX_MILES:
             continue
         if e["source"] != "manual" and re.search(
-                r"improv|comedy|stand-?up|musical\b|\(tour\)|symphony|private event|meeting|what.?s brewing|open mic|bingo|tailgate|vibe and paint|mindmeld|toddler|karaoke|trivia|workshop|guitar club|conversation with|podcast|summit|bar crawl|entrepreneur", e["title"] + " " + e["venue"], re.I):
+                r"improv|comedy|stand-?up|musical\b|\(tour\)|symphony|private event|meeting|what.?s brewing|open mic|bingo|tailgate|vibe and paint|mindmeld|toddler|karaoke|trivia|workshop|guitar club|conversation with|podcast|happy hour|name that tune|summit|bar crawl|entrepreneur", e["title"] + " " + e["venue"], re.I):
             continue
         events.append(e)
     rank = {"manual": 0, "jergels": 1, "stageae": 2, "registry": 3, "ticketmaster": 3, "eventbrite": 4}

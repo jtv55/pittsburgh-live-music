@@ -1,4 +1,5 @@
 [
+ {"name": "Crafthouse Stage & Grill", "status": "scraped", "type": "wp_posts", "url": "https://crafthousepgh.com", "city": "Pittsburgh", "address": "5024 Curry Rd", "lat": 40.3615, "lon": -79.9560, "area": "South", "size": "mid"},
  {"name": "Steamworks Creative", "status": "scraped", "type": "tribe", "url": "https://steamworkscreative.com", "area": "North", "size": "small"},
  {"name": "Roxian Theatre", "status": "scraped", "type": "ldjson", "url": "https://www.roxiantheatre.com/shows", "city": "McKees Rocks", "address": "425 Chartiers Ave", "lat": 40.4655, "lon": -80.0603, "area": "West", "size": "mid"},
  {"name": "Mr. Smalls Theatre", "status": "none", "note": "WordPress; event dates not exposed in page/REST data (ticketing widget)", "url": "https://mrsmalls.com/events/"},

@@ -19,7 +19,7 @@
  "spirithall": {"area": "Central", "size": "mid"},
  "spiritlodge": {"area": "Central", "size": "small"},
  "citywinerypittsburgh": {"area": "Central", "size": "mid"},
- "crafthousestagegrill": {"area": "West", "size": "small"},
+ "crafthousestagegrill": {"area": "South", "size": "small"},
  "bottlerocketsocialhall": {"area": "Central", "size": "small"},
  "enclavepittsburgh": {"area": "South", "size": "mid"},
  "enclave": {"area": "South", "size": "mid"},
