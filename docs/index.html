@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Steel City Setlist · Pittsburgh Live Music</title>
+<meta name="description" content="Every upcoming live show in greater Pittsburgh — big rooms, back-room bars, originals and cover bands.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0b0a;--panel:#171412;--line:#2a2522;--ink:#f3ece2;--mute:#9a8f84;--gold:#ffb81c;--hot:#ff4d2e;--cover:#7ee0c3}
+:root[data-theme="light"]{--bg:#f4eee4;--panel:#fffaf1;--line:#ddd2c2;--ink:#1b1613;--mute:#6f6558;--gold:#b87900;--hot:#d6361b;--cover:#0b7a5e}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4eee4;--panel:#fffaf1;--line:#ddd2c2;--ink:#1b1613;--mute:#6f6558;--gold:#b87900;--hot:#d6361b;--cover:#0b7a5e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;background:repeating-radial-gradient(circle at 85% -10%,transparent 0 6px,var(--ink) 6px 7px)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{padding:44px 0 18px}
+.kick{font:700 12px 'Space Mono',monospace;letter-spacing:.2em;color:var(--gold);text-transform:uppercase}
+h1{font:400 clamp(52px,11vw,120px)/.88 'Bebas Neue',Impact,sans-serif;margin:6px 0 10px;letter-spacing:.01em}
+h1 em{font-style:normal;color:var(--hot)}
+.sub{color:var(--mute);max-width:640px;margin:0}
+.bar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-block:1px solid var(--line);margin-top:22px}
+.bar .wrap{display:flex;flex-wrap:wrap;gap:10px 18px;padding:12px 16px;align-items:center}
+.grp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.grp label{font:700 11px 'Space Mono',monospace;color:var(--mute);letter-spacing:.12em;text-transform:uppercase;margin-right:2px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);padding:6px 12px;border-radius:99px;font:500 13px Inter;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--gold)}
+.chip[aria-pressed=true]{background:var(--gold);color:#1b1613;border-color:var(--gold)}
+select,input[type=search]{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:500 13px Inter}
+input[type=search]{min-width:180px;flex:1}
+.count{margin-left:auto;font:12px 'Space Mono',monospace;color:var(--mute)}
+main{padding:26px 0 80px}
+.month{font:400 38px 'Bebas Neue';letter-spacing:.04em;margin:34px 0 12px;display:flex;align-items:center;gap:14px}
+.month::after{content:"";height:1px;background:var(--line);flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;transition:.2s}
+.card:hover{transform:translateY(-3px);border-color:var(--gold)}
+.art{position:relative;aspect-ratio:16/10;background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,8,7,.88))}
+.art .ini{position:absolute;inset:0;display:grid;place-items:center;font:400 96px 'Bebas Neue';color:rgba(255,255,255,.22);letter-spacing:.05em}
+.date{position:absolute;top:12px;left:12px;z-index:2;background:var(--bg);border:1px solid var(--line);border-radius:12px;text-align:center;padding:6px 12px;line-height:1}
+.date b{display:block;font:400 30px 'Bebas Neue';color:var(--gold)}
+.date span{font:700 10px 'Space Mono';letter-spacing:.15em;color:var(--mute);text-transform:uppercase}
+.tag{position:absolute;top:12px;right:12px;z-index:2;background:var(--cover);color:#07271f;font:700 11px 'Space Mono';letter-spacing:.1em;padding:5px 10px;border-radius:99px;text-transform:uppercase}
+.art h3{position:relative;z-index:2;margin:0;padding:0 16px 12px;font:400 30px/1 'Bebas Neue';letter-spacing:.02em;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.venue{font-weight:600}.venue small{display:block;color:var(--mute);font-weight:400}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.stat i{display:block;font:normal 700 9px 'Space Mono';letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+.stat b{font:600 14px Inter}
+.with{color:var(--mute);font-size:13px}
+.acts{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{flex:1;text-align:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;color:var(--ink);text-decoration:none;font:600 13px Inter;background:transparent;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn.main{background:var(--hot);border-color:var(--hot);color:#fff}.btn.main:hover{color:#fff;filter:brightness(1.1)}
+.btn.play[data-on=true]{background:var(--gold);color:#1b1613;border-color:var(--gold)}
+.empty{text-align:center;color:var(--mute);padding:80px 0}
+footer{border-top:1px solid var(--line);padding:26px 0 50px;color:var(--mute);font-size:13px}
+footer a{color:var(--gold)}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.count{margin-left:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kick">Greater Pittsburgh · Live Music Guide</div>
+  <h1>Steel City<br><em>Setlist</em></h1>
+  <p class="sub">Arenas to back-room bars. Originals, tribute acts and cover bands — one scroll, every show.</p>
+</header>
+</div>
+<div class="bar"><div class="wrap">
+  <div class="grp"><label>Type</label>
+    <button class="chip" data-f="type" data-v="all" aria-pressed="true">All</button>
+    <button class="chip" data-f="type" data-v="cover" aria-pressed="false">Cover / Tribute</button>
+    <button class="chip" data-f="type" data-v="orig" aria-pressed="false">Originals</button></div>
+  <div class="grp"><label>Area</label><select id="area"><option value="">All areas</option><option>Central</option><option>North</option><option>South</option><option>East</option><option>West</option></select></div>
+  <div class="grp"><label>Month</label><select id="month"><option value="">All months</option></select></div>
+  <input type="search" id="q" placeholder="Search band or venue…">
+  <div class="count" id="count"></div>
+</div></div>
+<div class="wrap"><main id="out"></main>
+<footer><span id="upd"></span> · Event data is gathered from public venue and ticketing listings and refreshed automatically; always confirm times with the venue. Photos and 30-second samples via Deezer. Missing a show? <a href="https://github.com/jtv55/pittsburgh-live-music#add-a-show">Add it</a>.</footer></div>
+<audio id="aud"></audio>
+<script>
+const $=s=>document.querySelector(s), out=$('#out'), aud=$('#aud');
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const st={type:'all',area:'',month:'',q:''};let EV=[];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function grad(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return `linear-gradient(135deg,hsl(${h} 55% 28%),hsl(${(h+50)%360} 60% 14%))`}
+function fmtTime(t){if(!t||t==='00:00')return'TBA';let[h,m]=t.split(':').map(Number);return `${h%12||12}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`}
+function card(e){
+  const d=new Date(e.date+'T12:00:00'), head=e.artists[0]||e.title, sup=e.artists.slice(1,4);
+  const bg=e.image?`background-image:url('${esc(e.image)}')`:`background:${grad(head)}`;
+  const play=e.listen&&e.listen.preview?`<button class="btn play" data-src="${esc(e.listen.preview)}">▶ ${esc((e.listen.track||'Sample').slice(0,18))}</button>`:'';
+  return `<article class="card"><div class="art" style="${bg}">${e.image?'':`<div class="ini">${esc(head.slice(0,2).toUpperCase())}</div>`}
+  <div class="date"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-US',{weekday:'short'})}</span></div>
+  ${e.cover?'<div class="tag">Cover / Tribute</div>':''}<h3>${esc(e.title.length>70?head:e.title)}</h3></div>
+  <div class="body"><div class="venue">${esc(e.venue)}<small>${esc([e.address,e.city].filter(Boolean).join(', '))}</small></div>
+  <div class="stats"><div class="stat"><i>Area</i><b>${esc(e.area)}</b></div><div class="stat"><i>Doors/Show</i><b>${fmtTime(e.time)}</b></div><div class="stat"><i>Room</i><b>${esc({large:'Large',mid:'Mid',small:'Small'}[e.size]||'—')}</b></div></div>
+  ${sup.length?`<div class="with">With ${esc(sup.join(' · '))}</div>`:''}
+  <div class="acts">${play}<a class="btn" target="_blank" rel="noopener" href="${esc(e.youtube)}">YouTube ↗</a><a class="btn main" target="_blank" rel="noopener" href="${esc(e.url)}">Tickets / Info</a></div></div></article>`}
+function render(){
+  const q=st.q.toLowerCase();
+  const l=EV.filter(e=>(st.type==='all'||(st.type==='cover')===e.cover)&&(!st.area||e.area===st.area)&&(!st.month||e.date.startsWith(st.month))&&(!q||(e.title+e.venue+e.artists.join(' ')).toLowerCase().includes(q)));
+  $('#count').textContent=l.length+' show'+(l.length===1?'':'s');
+  if(!l.length){out.innerHTML='<div class="empty">No shows match. Try loosening a filter.</div>';return}
+  let h='',cur='';
+  for(const e of l){const m=e.date.slice(0,7);if(m!==cur){if(cur)h+='</div>';cur=m;h+=`<div class="month">${MN[+m.slice(5)-1]} ${m.slice(0,4)}</div><div class="grid">`}h+=card(e)}
+  out.innerHTML=h+'</div>';
+}
+document.addEventListener('click',ev=>{
+  const c=ev.target.closest('.chip');if(c){document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));st.type=c.dataset.v;render();return}
+  const p=ev.target.closest('.play');if(p){const on=p.dataset.on==='true';document.querySelectorAll('.play').forEach(x=>x.dataset.on=false);if(on){aud.pause();return}aud.src=p.dataset.src;aud.play();p.dataset.on=true}
+});
+aud.onended=()=>document.querySelectorAll('.play').forEach(x=>x.dataset.on=false);
+$('#area').onchange=e=>{st.area=e.target.value;render()};$('#month').onchange=e=>{st.month=e.target.value;render()};$('#q').oninput=e=>{st.q=e.target.value;render()};
+fetch('events.json').then(r=>r.json()).then(j=>{EV=j.events;
+  [...new Set(EV.map(e=>e.date.slice(0,7)))].forEach(m=>$('#month').insertAdjacentHTML('beforeend',`<option value="${m}">${MN[+m.slice(5)-1]} ${m.slice(0,4)}</option>`));
+  $('#upd').textContent='Updated '+new Date(j.updated).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});render()})
+ .catch(()=>out.innerHTML='<div class="empty">Couldn’t load events.</div>');
+</script>
+</body>
+</html>
