@@ -29,6 +29,8 @@ h1 em{font-style:normal;color:var(--hot)}
 .chip[aria-pressed=true]{background:var(--gold);color:#1b1613;border-color:var(--gold)}
 select,input[type=search]{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:500 13px Inter}
 input[type=search]{min-width:180px;flex:1}
+.genres{padding:0 0 12px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.genres .chip{white-space:nowrap;font-size:12px;padding:5px 11px}
+.genres .chip small{opacity:.6;margin-left:4px}
 .count{margin-left:auto;font:12px 'Space Mono',monospace;color:var(--mute)}
 main{padding:26px 0 80px}
 .month{font:400 38px 'Bebas Neue';letter-spacing:.04em;margin:34px 0 12px;display:flex;align-items:center;gap:14px}
@@ -79,14 +81,15 @@ footer a{color:var(--gold)}
   <div class="grp"><label>Month</label><select id="month"><option value="">All months</option></select></div>
   <input type="search" id="q" placeholder="Search band or venue…">
   <div class="count" id="count"></div>
-</div></div>
+</div>
+<div class="wrap"><div class="grp genres" id="genres"><label>Genre</label></div></div></div>
 <div class="wrap"><main id="out"></main>
 <footer><span id="upd"></span> · Event data is gathered from public venue and ticketing listings and refreshed automatically; always confirm times with the venue. Photos and 30-second samples via Deezer. Missing a show? <a href="https://github.com/jtv55/pittsburgh-live-music#add-a-show">Add it</a>.</footer></div>
 <audio id="aud"></audio>
 <script>
 const $=s=>document.querySelector(s), out=$('#out'), aud=$('#aud');
 const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const st={type:'all',area:'',month:'',q:''};let EV=[];
+const st={type:'all',area:'',month:'',q:'',genres:new Set()};let EV=[];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function grad(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return `linear-gradient(135deg,hsl(${h} 55% 28%),hsl(${(h+50)%360} 60% 14%))`}
 function fmtTime(t){if(!t||t==='00:00')return'TBA';let[h,m]=t.split(':').map(Number);return `${h%12||12}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`}
@@ -98,12 +101,12 @@ function card(e){
   <div class="date"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-US',{weekday:'short'})}</span></div>
   ${e.cover?'<div class="tag">Cover / Tribute</div>':''}<h3>${esc(e.title.length>70?head:e.title)}</h3></div>
   <div class="body"><div class="venue">${esc(e.venue)}<small>${esc([e.address,e.city].filter(Boolean).join(', '))}</small></div>
-  <div class="stats"><div class="stat"><i>Area</i><b>${esc(e.area)}</b></div><div class="stat"><i>Doors/Show</i><b>${fmtTime(e.time)}</b></div><div class="stat"><i>Room</i><b>${esc({large:'Large',mid:'Mid',small:'Small'}[e.size]||'—')}</b></div></div>
+  <div class="stats"><div class="stat"><i>Area</i><b>${esc(e.area)}</b></div><div class="stat"><i>Doors/Show</i><b>${fmtTime(e.time)}</b></div><div class="stat"><i>Genre</i><b>${esc(e.genre||'Other')}</b></div></div>
   ${sup.length?`<div class="with">With ${esc(sup.join(' · '))}</div>`:''}
   <div class="acts">${play}<a class="btn" target="_blank" rel="noopener" href="${esc(e.youtube)}">YouTube ↗</a><a class="btn main" target="_blank" rel="noopener" href="${esc(e.url)}">Tickets / Info</a></div></div></article>`}
 function render(){
   const q=st.q.toLowerCase();
-  const l=EV.filter(e=>(st.type==='all'||(st.type==='cover')===e.cover)&&(!st.area||e.area===st.area)&&(!st.month||e.date.startsWith(st.month))&&(!q||(e.title+e.venue+e.artists.join(' ')).toLowerCase().includes(q)));
+  const l=EV.filter(e=>(st.type==='all'||(st.type==='cover')===e.cover)&&(!st.area||e.area===st.area)&&(!st.month||e.date.startsWith(st.month))&&(!st.genres.size||st.genres.has(e.genre))&&(!q||(e.title+e.venue+e.artists.join(' ')).toLowerCase().includes(q)));
   $('#count').textContent=l.length+' show'+(l.length===1?'':'s');
   if(!l.length){out.innerHTML='<div class="empty">No shows match. Try loosening a filter.</div>';return}
   let h='',cur='';
@@ -111,13 +114,17 @@ function render(){
   out.innerHTML=h+'</div>';
 }
 document.addEventListener('click',ev=>{
-  const c=ev.target.closest('.chip');if(c){document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));st.type=c.dataset.v;render();return}
+  const gc=ev.target.closest('.chip[data-g]');if(gc){const g=gc.dataset.g;if(g==='*')st.genres.clear();else st.genres.has(g)?st.genres.delete(g):st.genres.add(g);
+    document.querySelectorAll('.chip[data-g]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.g==='*'?!st.genres.size:st.genres.has(x.dataset.g)));render();return}
+  const c=ev.target.closest('.chip[data-f]');if(c){document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));st.type=c.dataset.v;render();return}
   const p=ev.target.closest('.play');if(p){const on=p.dataset.on==='true';document.querySelectorAll('.play').forEach(x=>x.dataset.on=false);if(on){aud.pause();return}aud.src=p.dataset.src;aud.play();p.dataset.on=true}
 });
 aud.onended=()=>document.querySelectorAll('.play').forEach(x=>x.dataset.on=false);
 $('#area').onchange=e=>{st.area=e.target.value;render()};$('#month').onchange=e=>{st.month=e.target.value;render()};$('#q').oninput=e=>{st.q=e.target.value;render()};
 fetch('events.json').then(r=>r.json()).then(j=>{EV=j.events;
   [...new Set(EV.map(e=>e.date.slice(0,7)))].forEach(m=>$('#month').insertAdjacentHTML('beforeend',`<option value="${m}">${MN[+m.slice(5)-1]} ${m.slice(0,4)}</option>`));
+  const gc={};EV.forEach(e=>gc[e.genre]=(gc[e.genre]||0)+1);
+  $('#genres').insertAdjacentHTML('beforeend',`<button class="chip" data-g="*" aria-pressed="true">All</button>`+Object.entries(gc).sort((a,b)=>(a[0]==='Other')-(b[0]==='Other')||b[1]-a[1]).map(([g,n])=>`<button class="chip" data-g="${esc(g)}" aria-pressed="false">${esc(g)}<small>${n}</small></button>`).join(''));
   $('#upd').textContent='Updated '+new Date(j.updated).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});render()})
  .catch(()=>out.innerHTML='<div class="empty">Couldn’t load events.</div>');
 </script>

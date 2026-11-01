@@ -7,6 +7,8 @@ import json, re, sys, time, math, html, difflib, datetime as dt
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import requests
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import genres
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA, DOCS = ROOT / "data", ROOT / "docs"
@@ -30,6 +32,12 @@ def get(url, **kw):
             pass
         time.sleep(1.5 * (i + 1))
     return None
+
+
+def headliner(title):
+    """'Vince Staples - Cry Baby Tour' / 'Goldfinger w/ X' / 'Beartooth: Pure Ecstasy' -> first act's name."""
+    t = re.split(r"\s[-–—]\s|:\s|\s(?:w/|with|feat\.?|\+)\s|,\s|\s\|\s", clean(title), maxsplit=1)[0]
+    return re.sub(r"\s+(live|in concert)$", "", t, flags=re.I).strip() or clean(title)
 
 
 def ldjson(text):
@@ -73,7 +81,7 @@ def stageae():
         d = dt.datetime.strptime(f"{m.group(1)} {info.group(2)}", "%B %d %Y").date().isoformat()
         title = clean(t.group(1))
         acts = [clean(x) for x in (t.group(2) or "").split(",") if x.strip()]
-        out.append(dict(source="stageae", title=title, artists=acts or [title], date=d, time=None,
+        out.append(dict(source="stageae", title=title, artists=acts or [headliner(title)], date=d, time=None,
                         venue="Stage AE", city="Pittsburgh", address="400 North Shore Dr", lat=40.4467, lon=-80.0054,
                         image=None, url=info.group(1), desc=""))
     return out
@@ -107,14 +115,15 @@ def ticketmaster():
                             address=v.get("address", {}).get("line1", ""),
                             lat=float(loc["latitude"]) if loc.get("latitude") else None,
                             lon=float(loc["longitude"]) if loc.get("longitude") else None,
-                            image=imgs[0]["url"] if imgs else None, url=e.get("url", ""), desc=""))
+                            image=imgs[0]["url"] if imgs else None, url=e.get("url", ""), desc="",
+                            tmgenre=((e.get("classifications") or [{}])[0].get("genre") or {}).get("name")))
         if p + 1 >= j.get("page", {}).get("totalPages", 0):
             break
         time.sleep(0.3)
     return out
 
 
-NOISE = re.compile(r"church|school|synagogue|congregation|chapel|wedding|banquet|college|university|studio|community center|\bjcc\b|choir|bingo|trivia|workshop|conference", re.I)
+NOISE = re.compile(r"church|school|synagogue|congregation|chapel|wedding|banquet|college|university|studio|community center|\bjcc\b|choir|bingo|trivia|workshop|conference|karaoke|day party|brunch|yoga|open mic|rave", re.I)
 
 
 def eventbrite():
@@ -164,6 +173,67 @@ def jergels():
     return out
 
 
+def registry():
+    """Venue-direct sources listed in data/sources.json with status 'scraped' (types: tribe, ldjson)."""
+    out = []
+    for cfg in json.loads((DATA / "sources.json").read_text("utf8")):
+        if cfg.get("status") != "scraped":
+            continue
+        try:
+            got = (tribe if cfg["type"] == "tribe" else ldjson_venue)(cfg)
+        except Exception as ex:
+            print(f"  {cfg['name']} FAILED: {ex}")
+            continue
+        print(f"  {cfg['name']}: {len(got)}")
+        out += got
+    return out
+
+
+def tribe(cfg):
+    """WordPress 'The Events Calendar' REST API."""
+    out, url = [], cfg["url"].rstrip("/") + "/wp-json/tribe/events/v1/events?per_page=50"
+    for _ in range(6):
+        r = get(url)
+        if not r:
+            break
+        j = r.json()
+        for e in j.get("events", []):
+            v = e.get("venue") or {}
+            if isinstance(v, list):
+                v = {}
+            img = e.get("image")
+            out.append(dict(
+                source="registry", title=clean(e["title"]), artists=[headliner(e["title"])],
+                date=e["start_date"][:10], time=e["start_date"][11:16],
+                venue=cfg["name"], city=v.get("city") or cfg.get("city", ""), address=v.get("address") or cfg.get("address", ""),
+                lat=cfg.get("lat") or v.get("geo_lat"), lon=cfg.get("lon") or v.get("geo_lng"),
+                image=img.get("url") if isinstance(img, dict) else None, url=e.get("url", ""),
+                desc=clean(re.sub(r"<[^>]+>", " ", e.get("description", "")))[:300]))
+        url = j.get("next_rest_url")
+        if not url:
+            break
+    return out
+
+
+def ldjson_venue(cfg):
+    """Pages that embed schema.org MusicEvent/Event JSON-LD."""
+    r = get(cfg["url"])
+    out = []
+    if not r:
+        return out
+    for d in ldjson(r.text):
+        for e in (d if isinstance(d, list) else d.get("@graph", [d])):
+            if not isinstance(e, dict) or "Event" not in str(e.get("@type")) or not e.get("startDate"):
+                continue
+            out.append(dict(
+                source="registry", title=clean(e["name"]), artists=[headliner(e["name"])],
+                date=e["startDate"][:10], time=e["startDate"][11:16] or None, venue=cfg["name"],
+                city=cfg.get("city", ""), address=cfg.get("address", ""), lat=cfg.get("lat"), lon=cfg.get("lon"),
+                image=e.get("image") if isinstance(e.get("image"), str) else None, url=e.get("url", cfg["url"]),
+                desc=clean(e.get("description"))))
+    return out
+
+
 def manual():
     f = DATA / "manual_events.json"
     return json.loads(f.read_text("utf8")) if f.exists() else []
@@ -172,10 +242,13 @@ def manual():
 # ---------------------------------------------------------------- classify
 
 VENUES = json.loads((DATA / "venues.json").read_text("utf8"))
+for _c in json.loads((DATA / "sources.json").read_text("utf8")):
+    if _c.get("area"):
+        VENUES.setdefault(norm(_c["name"]), {"area": _c["area"], "size": _c.get("size")})
 COVER_NAMES = {norm(l) for l in (DATA / "cover_bands.txt").read_text("utf8").splitlines()
                if l.strip() and not l.startswith("#")}
 COVER_RE = re.compile(
-    r"\btribute\b|\bcover band\b|\bcovers\b|\bsalute to\b|\bmusic of\b|\bplays the (music|songs|hits)\b"
+    r"\btribute\b|\bcover band\b|\bcovers\b|\bsalute to\b|\bthe music of\b|\bultimate .{0,30}experience\b|\bexperience\)|\bplays the (music|songs|hits)\b"
     r"|\bcover show\b|\bperforming the (music|songs)\b", re.I)
 
 
@@ -214,6 +287,9 @@ def area_of(ev):
     return "West"
 
 
+GENRE_OVERRIDES = genres.load_overrides(DATA / "genres.json")
+
+
 # ---------------------------------------------------------------- enrich (Deezer: photo + 30s sample)
 
 def enrich(events):
@@ -232,11 +308,16 @@ def enrich(events):
             c = dict(t=now, hit=None)
             try:
                 r = S.get("https://api.deezer.com/search/artist", params={"q": name, "limit": 5}, timeout=15).json()
-                m = next((x for x in r.get("data", []) if norm(x["name"]) == k and x.get("nb_fan", 0) >= 1000), None)
+                m = next((x for x in r.get("data", []) if norm(x["name"]) == k and x.get("nb_fan", 0) >= 200), None)
                 if m:
                     t = S.get(f"https://api.deezer.com/artist/{m['id']}/top", params={"limit": 1},
                               timeout=15).json().get("data", [])
-                    c["hit"] = dict(pic=m.get("picture_xl") or m.get("picture_big"), link=m["link"],
+                    gen = []
+                    if t and t[0].get("album", {}).get("id"):
+                        al = S.get(f"https://api.deezer.com/album/{t[0]['album']['id']}", timeout=15).json()
+                        gen = [g["name"] for g in al.get("genres", {}).get("data", [])]
+                    c["hit"] = dict(fans=m.get("nb_fan", 0), genres=gen,
+                                    pic=m.get("picture_xl") or m.get("picture_big"), link=m["link"],
                                     track=t[0]["title"] if t else None, preview=t[0]["preview"] if t else None,
                                     tlink=t[0]["link"] if t else None)
                 time.sleep(0.12)
@@ -245,6 +326,8 @@ def enrich(events):
             cache[k] = c
         h = c["hit"]
         if h:
+            ev["dgenres"] = h.get("genres", [])
+        if h and h.get("fans", 0) >= 1000:
             ev["photo"] = h["pic"] if h["pic"] and "/artist//" not in h["pic"] else None
             ev["listen"] = dict(track=h["track"], preview=h["preview"], link=h["tlink"] or h["link"])
     cf.write_text(json.dumps(cache), "utf8")
@@ -255,7 +338,7 @@ def enrich(events):
 def main():
     skip_enrich = "--no-enrich" in sys.argv
     raw = []
-    for fn in (ticketmaster, stageae, jergels, eventbrite, manual):
+    for fn in (ticketmaster, stageae, jergels, registry, eventbrite, manual):
         try:
             got = fn()
             print(f"{fn.__name__}: {len(got)}")
@@ -269,10 +352,10 @@ def main():
         if e.get("lat") is not None and miles(float(e["lat"]), float(e["lon"]))[2] > MAX_MILES:
             continue
         if e["source"] != "manual" and re.search(
-                r"improv|comedy|stand-?up|musical\b|\(tour\)|symphony", e["title"] + " " + e["venue"], re.I):
+                r"improv|comedy|stand-?up|musical\b|\(tour\)|symphony|private event|meeting|what.?s brewing|open mic|bingo|tailgate|vibe and paint|mindmeld|toddler|karaoke|trivia|workshop|guitar club|conversation with|podcast|summit|bar crawl|entrepreneur", e["title"] + " " + e["venue"], re.I):
             continue
         events.append(e)
-    rank = {"manual": 0, "jergels": 1, "stageae": 2, "ticketmaster": 3, "eventbrite": 4}
+    rank = {"manual": 0, "jergels": 1, "stageae": 2, "registry": 3, "ticketmaster": 3, "eventbrite": 4}
     events.sort(key=lambda e: (e["date"], rank[e["source"]]))
     kept = []
     for e in events:
@@ -296,13 +379,15 @@ def main():
         e["size"] = VENUES.get(norm(e["venue"]), {}).get("size")
     if not skip_enrich:
         enrich(kept)
+    for e in kept:
+        e["genre"] = genres.genre_of(e, GENRE_OVERRIDES, VENUES.get(norm(e["venue"]), {}).get("genre"))
     final = []
     for e in kept:
         q = re.sub(r"\s+", "+", e["artists"][0])
         final.append(dict(
             id=f"{e['date']}-{norm(e['artists'][0])[:24]}-{norm(e['venue'])[:10]}", title=e["title"],
             artists=e["artists"][:4], date=e["date"], time=e.get("time"), venue=e["venue"], city=e["city"],
-            address=e.get("address"), area=e["area"], cover=e["cover"], size=e.get("size"),
+            address=e.get("address"), area=e["area"], cover=e["cover"], genre=e["genre"], size=e.get("size"),
             image=e.get("photo") or e.get("image"), photo=bool(e.get("photo")), url=e["url"],
             listen=e.get("listen"), youtube="https://www.youtube.com/results?search_query=" + q + "+live",
             source=e["source"]))
@@ -311,6 +396,7 @@ def main():
     (DOCS / "events.json").write_text(json.dumps(dict(
         updated=dt.datetime.now(ZoneInfo("America/New_York")).isoformat(timespec="minutes"),
         count=len(final), events=final), ensure_ascii=False, separators=(",", ":")), "utf8")
+    print("genres=", {g: sum(e["genre"] == g for e in final) for g in genres.GENRES + ["Other"]})
     print(f"wrote {len(final)} events; cover={sum(e['cover'] for e in final)}; areas=",
           {a: sum(e['area'] == a for e in final) for a in ("Central", "North", "South", "East", "West")})
 

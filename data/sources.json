@@ -1,0 +1,20 @@
+[
+ {"name": "Steamworks Creative", "status": "scraped", "type": "tribe", "url": "https://steamworkscreative.com", "area": "North", "size": "small"},
+ {"name": "Roxian Theatre", "status": "scraped", "type": "ldjson", "url": "https://www.roxiantheatre.com/shows", "city": "McKees Rocks", "address": "425 Chartiers Ave", "lat": 40.4655, "lon": -80.0603, "area": "West", "size": "mid"},
+ {"name": "Mr. Smalls Theatre", "status": "none", "note": "WordPress; event dates not exposed in page/REST data (ticketing widget)", "url": "https://mrsmalls.com/events/"},
+ {"name": "Thunderbird Cafe & Music Hall", "status": "none", "note": "Framer site, JS-rendered", "url": "https://www.thunderbirdpgh.com/"},
+ {"name": "Club Cafe", "status": "none", "note": "Squarespace; shows live on ticketing site", "url": "https://www.clubcafelive.com/"},
+ {"name": "Spirit", "status": "none", "note": "Squarespace; shows live on ticketing site", "url": "https://www.spiritpgh.com/events"},
+ {"name": "Pittsburgh Winery", "status": "none", "note": "RHP plugin, JS-rendered", "url": "https://pittsburghwinery.com/events/"},
+ {"name": "City Winery Pittsburgh", "status": "none", "url": "https://citywinery.com/pittsburgh/events"},
+ {"name": "Bottlerocket Social Hall", "status": "none", "url": "https://bottlerocketsocialhall.com"},
+ {"name": "Controversy", "status": "none", "url": "https://controversypgh.com"},
+ {"name": "SideQuest on 44th", "status": "none", "url": "https://sidequestpgh.com"},
+ {"name": "Legacy Theatre", "status": "none"},
+ {"name": "Poetry Lounge", "status": "none", "note": "Appears via Eventbrite only"},
+ {"name": "565 Live Speakeasy & Stage", "status": "none"},
+ {"name": "Liveburghstudio", "status": "none"},
+ {"name": "Sunken Bus Studios", "status": "none"},
+ {"name": "Hartwood Acres Amphitheater", "status": "none", "note": "Allegheny County parks"},
+ {"name": "Shooters Golf", "status": "none"}
+]
